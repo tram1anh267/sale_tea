@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="description" content="testD3" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.4/d3.min.js"></script>
+    <style>
+      /* Định dạng tiêu đề của mỗi câu (màu xanh lá, căn giữa) */
+    .chart-heading {
+       color: lightgreen; /* Màu xanh lá nhạt */
+       text-align: center;
+       font-size: 20px;
+       font-weight: bold;
+       margin-top: 20px;
+       margin-bottom: 10px;
+}
+
+      /* Các định dạng chung cho chart */
+      .pastel {
+        fill: lightblue;
+      }
+      .pastel:hover {
+        fill: pink;
+      }
+      .bar {
+        stroke: none;
+      }
+      .bar:hover {
+        fill: pink;
+      }
+      .axis-label {
+        font-size: 10px;
+        color: darkslategray;
+      }
+
+      /* Nếu bạn vẫn dùng các tiêu đề bên trong svg */
+      .chart-title {
+        font-family: 'Times New Roman';
+        font-size: 15px;
+        font-weight: bold;
+        color: darkgreen;
+      }
+
+      .legend {
+        font-family: Arial, sans-serif;
+        font-size: 9px;
+      }
+
+      .legend rect {
+        fill: lightblue;
+        stroke: #ccc;
+        stroke-width: 1px;
+      }
+
+      .legend text {
+        fill: #333;
+      }
+
+      .label {
+        font-size: 10px;
+        fill: #000;
+      }
+
+      /* Một số style cho các container nếu cần */
+      #chart1, #chart2, #chart3, #chart4, #chart5, 
+      #chart6, #chart7, #chart8, #chart9, #chart10, 
+      #chart11, #chart12 {
+        margin: 0 auto;
+        width: 80%;
+      }
+
+      .chart-container {
+        display: none;
+      }
+
+      .chart-container.active {
+        display: block;
+      }
+
+      .buttons {
+        margin-bottom: 20px;
+      }
+
+      .buttons button {
+        padding: 10px;
+        margin: 5px;
+        cursor: pointer;
+      }
+      .h2 {
+        font-size: 20px;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="buttons">
+        <button onclick="showChart(1)">Q1</button>
+        <button onclick="showChart(2)">Q2</button>
+        <button onclick="showChart(3)">Q3</button>
+        <button onclick="showChart(4)">Q4</button>
+        <button onclick="showChart(5)">Q5</button>
+        <button onclick="showChart(6)">Q6</button>
+        <button onclick="showChart(7)">Q7</button>
+        <button onclick="showChart(8)">Q8</button>
+        <button onclick="showChart(9)">Q9</button>
+        <button onclick="showChart(10)">Q10</button>
+        <button onclick="showChart(11)">Q11</button>
+        <button onclick="showChart(12)">Q12</button>
+    </div>
+
+    <div id="chart1" class="chart-container active">
+        <h2>Doanh số bán hàng theo Mặt hàng</h2>
+    </div>
+
+    <div id="chart2" class="chart-container">
+        <h2>Doanh số bán hàng theo Nhóm hàng</h2>
+    </div>
+
+    <div id="chart3" class="chart-container">
+        <h2>Doanh số bán hàng theo Tháng</h2>
+    </div>
+
+    <div id="chart4" class="chart-container">
+        <h2>Doanh số bán hàng trung bình theo Ngày trong tuần</h2>
+    </div>
+
+    <div id="chart5" class="chart-container">
+        <h2>Doanh số bán hàng trung bình theo Ngày trong tháng</h2>
+    </div>
+
+    <div id="chart6" class="chart-container">
+        <h2>Doanh số bán hàng trung bình theo khung giờ</h2>
+    </div>
+
+    <div id="chart7" class="chart-container">
+        <h2>Xác suất bán hàng theo Nhóm hàng</h2>
+    </div>
+
+    <div id="chart8" class="chart-container">
+        <h2> Xác suất bán hàng của Nhóm hàng theo Tháng</h2>
+    </div>
+
+    <div id="chart9" class="chart-container">
+        <h2>Chưa có tiêu đề</h2>
+    </div>
+
+    <div id="chart10" class="chart-container">
+        <h2>Xác suất bán hàng của Mặt hàng theo Nhóm hàng theo từng Tháng</h2>
+    </div>
+
+    <div id="chart11" class="chart-container">
+        <h2>Phân phối Lượt mua hàng</h2>
+    </div>
+
+    <div id="chart12" class="chart-container">
+        <h2>Phân phối Mức chi trả của Khách hàng</h2>
+    </div>
+
+    <script>
+      function showChart(chartNumber) {
+        // Ẩn tất cả các biểu đồ
+        let charts = document.querySelectorAll('.chart-container');
+        charts.forEach(chart => chart.classList.remove('active'));
+
+        // Hiển thị biểu đồ được chọn
+        document.getElementById('chart' + chartNumber).classList.add('active');
+      }
+    </script>
+
+    <!-- ============================
+    Câu 1: Doanh số bán hàng theo Mặt hàng
+    (Tick x cố định: 0, 100M, 200M, …, 700M)
+    ============================ -->
+    <script>
+    d3.csv("cau1.csv").then(function(data) {
+    const dataset1 = data.map(function(d){
+      return {
+        MaMatHang: d["Mã mặt hàng"],
+        TenMatHang: d["Tên mặt hàng"],
+        SL: +d["SL"],
+        ThanhTien: +d["Thành tiền"]
+      };
+    });
+
+    const width1 = 1000, height1 = 1000;
+    const padding1 = {top: 10, right: 90, bottom: 40, left: 40};
+
+    const svg1 = d3.select("#chart1")
+      .append("svg")
+      .attr("width", width1)
+      .attr("height", height1)
+      .append("g")
+      .attr("transform", `translate(185, ${padding1.top})`);
+
+    // Scale
+    const x1scale = d3.scaleLinear()
+      .domain([0, d3.max(dataset1, d => d.ThanhTien)])
+      .range([0, width1 - padding1.left * 5 - padding1.right]);
+
+    const y1scale = d3.scaleBand()
+      .domain(dataset1.map(d => `[ ${d.MaMatHang} ] ${d.TenMatHang}`))
+      .range([0, height1 - padding1.top - padding1.bottom])
+      .padding(0.2); // Tăng padding để tạo khoảng cách giữa các cột
+
+    // Vẽ bar chart và thêm nhãn giá trị
+    const colorScale1 = d3.scaleOrdinal()
+      .domain(dataset1.map((d, i) => i)) 
+      .range(d3.schemeTableau10); 
+
+    svg1.selectAll("rect")
+      .data(dataset1)
+      .enter()
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", d => y1scale(`[ ${d.MaMatHang} ] ${d.TenMatHang}`))
+      .attr("width", d => x1scale(d.ThanhTien))
+      .attr("height", y1scale.bandwidth())
+      .attr("fill", (d, i) => colorScale1(i)) 
+      .attr("class", "bar")
+      .append("title")
+      .text(d => `Thành tiền: ${d.ThanhTien.toLocaleString()} VND, SL: ${d.SL}`);
+
+    // Hiển thị nhãn giá trị (label) với đơn vị triệu VND trên thanh bar
+    svg1.selectAll(".label")
+      .data(dataset1)
+      .enter()
+      .append("text")
+      .attr("class", "label")
+      .attr("x", d => x1scale(d.ThanhTien) - 5) 
+      .attr("y", d => y1scale(`[ ${d.MaMatHang} ] ${d.TenMatHang}`) + y1scale.bandwidth() / 2 + 5)
+      .attr("fill", "white") // Để nhãn hiển thị rõ trên nền màu
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "end") // Căn phải để nhãn không bị che khuất
+      .text(d => `${(d.ThanhTien / 1e6).toFixed(0)} triệu VND`);
+
+    // X-axis với tick cố định giữ nguyên đơn vị M
+    const xTicks1 = [0, 100000000, 200000000, 300000000, 400000000, 500000000, 600000000, 700000000];
+    const xAxis1 = d3.axisBottom(x1scale)
+      .tickValues(xTicks1)
+      .tickFormat(d3.format(".2s"));
+
+    svg1.append("g")
+      .attr("transform", `translate(0,${height1 - padding1.bottom - 10})`)
+      .call(xAxis1);
+
+    svg1.append("g").call(d3.axisLeft(y1scale));
+    });
+
+
+ 
+      /* ============================
+         Câu 2: Doanh số bán hàng theo Nhóm hàng
+         (Tick x cố định: 0, 500M, 1000M, 1500M, 2000M)
+      ============================ */
+d3.csv("cau2.csv").then(function(data){
+    const dataset2 = data.map(function(d){
+        return {
+            MaNhomHang: d["Mã nhóm hàng"],
+            TenNhomHang: d["Tên nhóm hàng"],
+            ThanhTien: +d["Thành tiền"],
+            SL: +d["SL"]
+        };
+    });
+
+    const width2 = 1000, height2 = 600;
+    const padding2 = {top: 20, bottom: 40, left: 120, right: 90}; // Tăng padding left để tránh cắt chữ
+
+    const svg2 = d3.select("#chart2")
+        .append("svg")
+        .attr("width", width2)
+        .attr("height", height2)
+        .append("g")
+        .attr("transform", `translate(${padding2.left}, ${padding2.top})`);
+
+    const x2scale = d3.scaleLinear()
+        .domain([0, d3.max(dataset2, d => d.ThanhTien)])
+        .range([0, width2 - padding2.left - padding2.right]);
+
+    const y2scale = d3.scaleBand()
+        .domain(dataset2.map(d => `[${d.MaNhomHang}] ${d.TenNhomHang}`))
+        .range([0, height2 - padding2.top - padding2.bottom])
+        .padding(0.2);
+
+    const colorScale2 = d3.scaleOrdinal(d3.schemeTableau10);
+
+    // Vẽ cột (Bar chart)
+    svg2.selectAll("rect")
+        .data(dataset2)
+        .enter()
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", d => y2scale(`[${d.MaNhomHang}] ${d.TenNhomHang}`))
+        .attr("width", d => x2scale(d.ThanhTien))
+        .attr("height", y2scale.bandwidth())
+        .attr("fill", (d, i) => colorScale2(i))
+        .attr("class", "bar")
+        .append("title")
+        .text(d => `Thành tiền: ${Math.round(d.ThanhTien / 1_000_000)} triệu VND, SL: ${d.SL}`);
+
+    // Hiển thị nhãn trên thanh bar
+    svg2.selectAll(".label")
+        .data(dataset2)
+        .enter()
+        .append("text")
+        .attr("class", "label")
+        .attr("x", d => x2scale(d.ThanhTien) - 10)  // Dịch vào trong thanh
+        .attr("y", d => y2scale(`[${d.MaNhomHang}] ${d.TenNhomHang}`) + y2scale.bandwidth() / 2 + 4)
+        .attr("text-anchor", "end")  // Căn phải chữ
+        .attr("fill", "white")  // Đổi màu để nổi bật hơn
+        .attr("font-weight", "bold")
+        .text(d => `${Math.round(d.ThanhTien / 1_000_000)} triệu VND`);
+
+    // Hiển thị trục X với đơn vị "triệu VND"
+const xAxis2 = d3.axisBottom(x2scale)
+    .tickValues([0, 500_000_000, 1_000_000_000, 1_500_000_000, 2_000_000_000])
+    .tickFormat(d => `${d / 1_000_000}M`);
+
+    svg2.append("g")
+        .attr("transform", `translate(0, ${height2 - padding2.bottom})`)
+        .call(xAxis2);
+
+    // Hiển thị trục Y
+    svg2.append("g").call(d3.axisLeft(y2scale));
+});
+
+
+
+ /* ============================
+         Câu 3: Doanh số bán hàng theo Tháng
+         (Hiển thị "Tháng 01", "Tháng 02", …)
+      ============================ */
+d3.csv("cau3.csv").then(function(data){
+    const dataset3 = data.map(function(d) {
+        return {
+            Thang: +d["Tháng"],
+            ThanhTien: +d["Thành tiền"],
+            SL: +d["SL"]
+        }
+    });
+
+    const w3 = 1000, h3 = 1000;
+    const p3 = {top: 20, bottom: 50, left: 100, right: 40};
+
+    const svg3 = d3.select("#chart3").append("svg")
+        .attr("width", w3)
+        .attr("height", h3)
+        .append("g")
+        .attr("transform", `translate(${p3.left}, ${p3.top})`);
+
+    // Định dạng tháng
+    const formatMonth = m => m < 10 ? `Tháng 0${m}` : `Tháng ${m}`;
+
+    // Tạo thang đo
+    const x3scale = d3.scaleBand()
+        .domain(dataset3.map(d => formatMonth(d.Thang)))
+        .range([0, w3 - p3.left - p3.right])
+        .padding(0.2);
+
+    const y3scale = d3.scaleLinear()
+        .domain([0, d3.max(dataset3, d => d.ThanhTien)])
+        .range([h3 - p3.top - p3.bottom, 0]);
+
+    // Màu sắc
+    const colorScale3 = d3.scaleOrdinal(d3.schemeTableau10);
+
+    // Vẽ cột
+    svg3.selectAll("rect")
+        .data(dataset3)
+        .enter()
+        .append("rect")
+        .attr("x", d => x3scale(formatMonth(d.Thang)))
+        .attr("y", d => y3scale(d.ThanhTien))
+        .attr("width", x3scale.bandwidth())
+        .attr("height", d => (h3 - p3.top - p3.bottom) - y3scale(d.ThanhTien))
+        .attr("fill", (d, i) => colorScale3(i))
+        .attr("class", "bar")
+        .append("title")
+        .text(d => `Thành tiền: ${Math.round(d.ThanhTien / 1_000_000)} triệu VND, SL: ${d.SL}`);
+
+    // Thêm nhãn trên từng cột
+    svg3.selectAll(".label")
+        .data(dataset3)
+        .enter()
+        .append("text")
+        .attr("class", "label")
+        .attr("x", d => x3scale(formatMonth(d.Thang)) + x3scale.bandwidth() / 2)
+        .attr("y", d => y3scale(d.ThanhTien) - 10) // Đặt nhãn ngay trên cột
+        .attr("text-anchor", "middle")
+        .attr("fill", "#000") // Màu chữ đậm
+        .style("font-size", "12px")
+        .text(d => `${Math.round(d.ThanhTien / 1_000_000)} triệu VND`);
+
+    // Trục X
+    svg3.append("g")
+        .attr("transform", `translate(0, ${h3 - p3.bottom})`)
+        .call(d3.axisBottom(x3scale))
+        .selectAll("text")
+        .attr("transform", "rotate(-15)") // Xoay chữ để dễ đọc
+        .style("text-anchor", "end");
+
+    // Trục Y với đơn vị triệu VND
+    svg3.append("g")
+        .call(d3.axisLeft(y3scale)
+            .tickFormat(d => `${Math.round(d / 500_000)}M`)) // Hiển thị triệu trên trục Y
+        .append("text")
+        .attr("fill", "#000")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -80)
+        .attr("x", -h3 / 3)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle");
+});
+
+  
+      /* ============================
+         Câu 4: Doanh số bán hàng trung bình theo Ngày trong tuần
+         (Chuyển tên ngày sang tiếng Việt: Thứ Hai, Thứ Ba, …)
+      ============================ */
+ d3.csv("cau4.csv").then(function(data){
+    const dataset4 = data.map(function(d){
+        return {
+            Thu: d["Thứ"],
+            DTTB: +d["DTTB"],
+            SLTB: +d["SLTB"]
+        }
+    });
+
+    const w4 = 1000, h4 = 600;
+    const p4 = {top: 20, bottom: 50, left: 100, right: 40};
+
+    const svg4 = d3.select("#chart4").append("svg")
+        .attr("width", w4)
+        .attr("height", h4)
+        .append("g")
+        .attr("transform", `translate(${p4.left}, ${p4.top})`);
+
+    const dayMapping = {
+        Monday: "Thứ Hai",
+        Tuesday: "Thứ Ba",
+        Wednesday: "Thứ Tư",
+        Thursday: "Thứ Năm",
+        Friday: "Thứ Sáu",
+        Saturday: "Thứ Bảy",
+        Sunday: "Chủ Nhật"
+    };
+
+    // Thang đo
+    const x4scale = d3.scaleBand()
+        .domain(dataset4.map(d => dayMapping[d.Thu] || d.Thu))
+        .range([0, w4 - p4.left - p4.right])
+        .padding(0.2);
+
+    const y4scale = d3.scaleLinear()
+        .domain([0, d3.max(dataset4, d => d.DTTB)])
+        .range([h4 - p4.top - p4.bottom, 0]);
+
+    const colorScale4 = d3.scaleOrdinal(d3.schemeTableau10);
+
+    // Vẽ cột
+    svg4.selectAll("rect")
+        .data(dataset4)
+        .enter()
+        .append("rect")
+        .attr("x", d => x4scale(dayMapping[d.Thu] || d.Thu))
+        .attr("y", d => y4scale(d.DTTB))
+        .attr("width", x4scale.bandwidth())
+        .attr("height", d => (h4 - p4.top - p4.bottom) - y4scale(d.DTTB))
+        .attr("fill", (d, i) => colorScale4(i))
+        .attr("class", "bar")
+        .append("title")  // Tooltip hiển thị số thực
+        .text(d => `DTTB: ${d.DTTB.toLocaleString()} VND, SLTB: ${d.SLTB}`);
+
+    // Nhãn hiển thị trên cột
+svg4.selectAll(".label")
+    .data(dataset4)
+    .enter()
+    .append("text")
+    .attr("class", "label")
+    .attr("x", d => x4scale(dayMapping[d.Thu] || d.Thu) + x4scale.bandwidth() / 2)
+    .attr("y", d => y4scale(d.DTTB) - 10) // Dịch lên trên cột một chút
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("fill", "black") // Đảm bảo chữ hiển thị rõ
+    .text(d => `${d3.format(",")(d.DTTB)} VND`); // Hiển thị số kèm đơn vị
+
+    // Trục X
+    svg4.append("g")
+        .attr("transform", `translate(0, ${h4 - p4.bottom})`)
+        .call(d3.axisBottom(x4scale))
+        .selectAll("text")
+        .attr("transform", "rotate(-15)") // Xoay chữ để dễ đọc
+        .style("text-anchor", "end");
+
+    // Trục Y
+    svg4.append("g")
+        .call(d3.axisLeft(y4scale).tickFormat(d3.format(".2s")))
+        .append("text")
+        .attr("fill", "#000")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -70)
+        .attr("x", -h4 / 3)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+      ;
+});
+
+  
+      /* ============================
+         Câu 5: Doanh số bán hàng trung bình theo Ngày trong tháng
+         (Trục y có tick cách nhau 5M)
+      ============================ */
+d3.csv("cau5.csv").then(function(data){
+    const dataset5 = data.map(function(d) {
+        return {
+            Ngay: d["Ngày"],
+            DTTB: +d["DTTB"],
+            SLTB: +d["SLTB"]
+        }
+    });
+
+    const w5 = 1500, h5 = 1000;
+    const p5 = {top: 20, bottom: 70, left: 80, right: 100}; // Điều chỉnh khoảng cách
+    const svg5 = d3.select("#chart5").append("svg")
+        .attr("width", w5)
+        .attr("height", h5)
+        .append("g")
+        .attr("transform", `translate(185, ${p5.top})`);
+
+    const x5scale = d3.scaleBand()
+        .domain(dataset5.map(d => `Ngày ${d.Ngay}`))
+        .range([0, w5 - p5.left - p5.right])
+        .padding(0.2);
+
+    const maxY5 = 15000000; // Trục Y cao nhất 15M
+    const y5scale = d3.scaleLinear()
+        .domain([0, maxY5])
+        .range([h5 - p5.top - p5.bottom, 20]);
+
+    const colorScale5 = d3.scaleOrdinal(d3.schemeTableau10);
+    svg5.selectAll("rect")
+        .data(dataset5)
+        .enter()
+        .append("rect")
+        .attr("x", d => x5scale(`Ngày ${d.Ngay}`))
+        .attr("y", d => y5scale(d.DTTB))
+        .attr("width", x5scale.bandwidth())
+        .attr("height", d => (h5 - p5.top - p5.bottom) - y5scale(d.DTTB))
+        .attr("fill", (d, i) => colorScale5(i))
+        .attr("class", "bar")
+        .append("title")
+        .text(d => `DTTB: ${d.DTTB}, SLTB: ${d.SLTB}`);
+
+    // Thêm nhãn vào trong cột, xoay dọc theo cột
+svg5.selectAll(".label")
+    .data(dataset5)
+    .enter()
+    .append("text")
+    .attr("class", "label")
+    .attr("x", d => x5scale(`Ngày ${d.Ngay}`) + x5scale.bandwidth() / 2) // Giữ label giữa cột
+    .attr("y", d => y5scale(d.DTTB) + (h5 - p5.top - p5.bottom - y5scale(d.DTTB)) / 2) // Giữ label giữa thanh bar
+    .attr("text-anchor", "middle")
+    .attr("transform", d => {
+        let x = x5scale(`Ngày ${d.Ngay}`) + x5scale.bandwidth() / 2;
+        let y = y5scale(d.DTTB) + (h5 - p5.top - p5.bottom - y5scale(d.DTTB)) / 2;
+        return `rotate(-90, ${x}, ${y})`;
+    })
+    .style("fill", "white") // Để chữ dễ đọc trên nền màu
+    .style("font-size", "14px")
+    .text(d => `${(d.DTTB / 1000000).toFixed(1)} tr`);
+
+    svg5.append("g")
+        .attr("transform", `translate(0, ${h5 - p5.bottom - 15})`)
+        .call(d3.axisBottom(x5scale))
+        .selectAll("text")
+        .style("text-anchor", "end")
+        .attr("transform", "rotate(-45)");
+
+    // Định dạng trục Y với giá trị 0M, 5M, 10M, 15M
+    svg5.append("g")
+        .call(d3.axisLeft(y5scale)
+        .tickValues([0, 5000000, 10000000, 15000000])
+        .tickFormat(d => `${d / 1000000}M`)); // Định dạng số triệu (0M, 5M, 10M, 15M)
+});
+
+
+      /* ============================
+         Câu 6: Doanh số bán hàng trung bình theo khung giờ
+      ============================ */
+      d3.csv("cau6.csv").then(function(data){
+        const dataset6 = data.map(function(d) {
+          return {
+            Gio: d["Giờ"],
+            DTTB: +d["DTTB"],
+            SLTB: +d["SLTB"]
+          }
+        });
+        const w6 = 1500, h6 = 1000;
+        const p6 = {top:20, bottom:40, left:30, right:40};
+        const svg6 = d3.select("#chart6").append("svg")
+          .attr("width", w6)
+          .attr("height", h6)
+          .append("g")
+          .attr("transform", `translate(185, ${p6.top-15})`);
+  
+        const x6scale = d3.scaleBand()
+          .domain(dataset6.map(d=> `${d.Gio}:00-${d.Gio}:59`))
+          .range([0, w6 - p6.left*6 - p6.right])
+          .padding(0.2);
+        const y6scale = d3.scaleLinear()
+          .domain([0, d3.max(dataset6, d=> d.DTTB)])
+          .range([h6 - p6.top - p6.bottom, 20]);
+  
+        const colorScale6 = d3.scaleOrdinal(d3.schemeTableau10);
+        svg6.selectAll("rect")
+          .data(dataset6)
+          .enter()
+          .append("rect")
+          .attr("x", d=> x6scale(`${d.Gio}:00-${d.Gio}:59`))
+          .attr("y", d=> y6scale(d.DTTB))
+          .attr("width", x6scale.bandwidth())
+          .attr("height", d=> (h6 - p6.top - p6.bottom)- y6scale(d.DTTB))
+          .attr("fill", (d,i)=> colorScale6(i))
+          .attr("class", "bar")
+          .append("title")
+          .text(d=> `DTTB: ${d.DTTB}, SLTB: ${d.SLTB}`);
+  
+ svg6.append("g")
+    .call(d3.axisLeft(y6scale)
+        .tickValues([0, 200000, 400000, 600000, 800000]) // Đặt giá trị cố định
+        .tickFormat(d => `${(d / 1000000).toFixed(1)}M`)); // Định dạng thành 0,0M - 0,2M - 0,4M...
+svg6.append("g")
+    .attr("transform", `translate(0, ${h6 - p6.bottom - 15})`) // Đặt vị trí trục X
+    .call(d3.axisBottom(x6scale))
+    .selectAll
+
+
+svg6.selectAll(".label")
+    .data(dataset6)
+    .enter()
+    .append("text")
+    .attr("class", "label")
+    .attr("x", d => x6scale(`${d.Gio}:00-${d.Gio}:59`) + x6scale.bandwidth() / 2)
+    .attr("y", d => y6scale(d.DTTB) - 5)
+    .attr("text-anchor", "middle")
+    .style("fill", "black")
+    .style("font-size", "14px")
+    .text(d => `${(d.DTTB / 1000).toFixed(1)}K`); // Định dạng 772,1K thay vì 770K
+
+      });
+  
+      /* ============================
+         Câu 7: Xác suất bán hàng theo Nhóm hàng
+      ============================ */
+      d3.csv("cau7.csv").then(function(data){
+        const dataset7 = data.map(function(d){
+          return {
+            MaNhomHang: d["Mã nhóm hàng"],
+            TenNhomHang: d["Tên nhóm hàng"],
+            XacSuat: +d["Xác suất"]
+          };
+        });
+        const width7 = 1500, height7 = 1000;
+        const padding7 = {top:20, right:30, bottom:40, left:40 };
+        const svg7 = d3.select("#chart7")
+          .append("svg")
+          .attr("width", width7)
+          .attr("height", height7)
+          .append("g")
+          .attr("transform",`translate(185, ${padding7.top})`);
+  
+        const x7scale = d3.scaleLinear()
+          .domain([0, d3.max(dataset7, d => d.XacSuat)])
+          .range([0, width7 - padding7.left*5 - padding7.right]);
+        const y7scale = d3.scaleBand()
+          .domain(dataset7.map(d=> `[${d.MaNhomHang}]${d.TenNhomHang}`))
+          .range([0, height7 - padding7.top - padding7.bottom])
+          .padding(0.2);
+  
+        const colorScale7 = d3.scaleOrdinal(d3.schemeTableau10);
+        svg7.selectAll("rect")
+          .data(dataset7)
+          .enter()
+          .append("rect")
+          .attr("x", 0)
+          .attr("y", d=> y7scale(`[${d.MaNhomHang}]${d.TenNhomHang}`))
+          .attr("width", d=> x7scale(d.XacSuat))
+          .attr("height", y7scale.bandwidth())
+          .attr("fill", (d, i)=> colorScale7(i))
+          .attr("class", "bar")
+          .append("title")
+          .text(d=> "Xác Suất: " + d.XacSuat + "%");
+  
+        svg7.selectAll(".label")
+          .data(dataset7)
+          .enter()
+          .append("text")
+          .attr("class", "label")
+          .attr("x", d=> x7scale(d.XacSuat) + 5)
+          .attr("y", d=> y7scale(`[${d.MaNhomHang}]${d.TenNhomHang}`) + y7scale.bandwidth()/2 + 4)
+          .text(d=> d.XacSuat.toFixed(2) + "%");
+  
+  svg7.append("g")
+    .attr("transform", `translate(0,${height7 - padding7.bottom - 15})`)
+    .call(d3.axisBottom(x7scale)
+        .tickValues([0, 10, 20, 30, 40, 50]) // Đặt các giá trị mong muốn
+        .tickFormat(d => `${d}%`)); // Hiển thị theo định dạng %
+
+        svg7.append("g").call(d3.axisLeft(y7scale));
+      });
+
+      /* ============================
+         Câu 8: Xác suất bán hàng của Nhóm hàng theo Tháng
+      ============================ */
+    const w8 = 1800, h8 = 1000;
+const p8 = { top: 10, bottom: 50, left: 80, right: 30 };
+
+const svg8 = d3.select("#chart8")
+  .append("svg")
+  .attr("width", w8)
+  .attr("height", h8)
+  .append("g")
+  .attr("transform", `translate(185, ${p8.top})`);
+
+d3.csv("cau8.csv").then(function(data) {
+  data.forEach(d => {
+    d.Thang = +d.Thang;
+    d.XacSuat = +d.XacSuat;
+  });
+
+  const sumstas8 = d3.group(data, d => d.TenNhomHang);
+
+  // Trục X: Tháng 01, Tháng 02, ..., Tháng 12
+  const x8scale = d3.scaleLinear()
+    .domain([1, 12])
+    .range([0, w8 - p8.left * 4 - p8.right]);
+
+  svg8.append("g")
+    .attr("transform", `translate(0, ${h8 - p8.top - p8.bottom})`)
+    .call(d3.axisBottom(x8scale)
+      .tickValues(d3.range(1, 13))
+      .tickFormat(d => `Tháng ${String(d).padStart(2, '0')}`))
+    .selectAll("text")
+    .attr("transform", "rotate(-45)")
+    .style("text-anchor", "end");
+
+  // Trục Y: 20% -> 70%
+  const y8scale = d3.scaleLinear()
+    .domain([0.2, 0.7])
+    .range([h8 - p8.top - p8.bottom, 15]);
+
+  svg8.append("g")
+    .call(d3.axisLeft(y8scale)
+      .tickValues(d3.range(0.2, 0.8, 0.1))
+      .tickFormat(d => `${(d * 100).toFixed(0)}%`));
+
+  // Màu sắc theo nhóm hàng
+  const color = d3.scaleOrdinal()
+    .domain(Array.from(sumstas8.keys()))
+    .range(d3.schemeTableau10);
+
+  // Vẽ đường biểu diễn
+  svg8.selectAll(".line")
+    .data(sumstas8)
+    .enter()
+    .append("path")
+    .attr("fill", "none")
+    .attr("stroke", d => color(d[0]))
+    .attr("stroke-width", 2.5)
+    .attr("d", function(d) {
+      return d3.line()
+        .x(d => x8scale(d.Thang))
+        .y(d => y8scale(d.XacSuat))
+        (d[1]);
+    });
+
+  // Chấm tròn trên các điểm dữ liệu
+  svg8.selectAll("circle")
+    .data(sumstas8)
+    .enter()
+    .selectAll("circle")
+    .data(d => d[1])
+    .enter()
+    .append("circle")
+    .attr("cx", d => x8scale(d.Thang))
+    .attr("cy", d => y8scale(d.XacSuat))
+    .attr("r", 5)
+    .attr("stroke", "white")
+    .attr("fill", d => color(d.TenNhomHang))
+    .attr("class", "bar");
+
+
+
+  // Legend (chú thích nhóm hàng)
+  const legend = svg8.selectAll(".legend")
+    .data(color.domain())
+    .enter()
+    .append("g")
+    .attr("class", "legend")
+    .attr("transform", (d, i) => `translate(${h8 + 130},${250 + i * 20})`);
+
+  legend.append("rect")
+    .attr("x", -w8 + 50)
+    .attr("y", -h8 + 150)
+    .attr("height", 10)
+    .attr("width", 10)
+    .attr("fill", color);
+
+  legend.append("text")
+    .attr("x", -w8 + 65)
+    .attr("y", -h8 + 155)
+    .attr("dy", ".35em")
+    .style("text-anchor", "start")
+    .text(d => d);
+});
+
+  
+      /* ============================
+         Câu 9: Placeholder (Chưa có dữ liệu)
+      ============================ */
+     //chuyển dữ liệu và nhóm dl chính
+        d3.csv("cau9.csv").then(function(data){
+            const sumstas9 = d3.group(data, d=>d.TenNhomHang)
+            //tạo svg cho mỗi group
+            const w9 = 800
+            const h9 = 300
+            const p9 = {top:30, right:150, left:50, bottom:30}
+
+            const svg9 = d3.select("#chart9")
+                            .selectAll("svg")
+                            .data(Array.from(sumstas9))
+                            .enter()
+                            .append("svg")
+                            .attr("width", w9)
+                            .attr("height", h9)
+                            .append("g")
+                            .attr("transform", `translate(185, ${p9.top})`)
+            //tạo dữ liệu cho mỗi group
+            svg9.each(function(groupdata){
+                const groups9 = d3.select(this);
+                //tạo scale c, y, color cho mỗi group
+                const x9scale = d3.scaleLinear()
+                .domain([0, d3.max(groupdata[1], d=>+d.XacSuat)])
+                .range([0, w9 -p9.left-p9.right]);
+                groups9.append("g")
+                .attr("transform", `translate(0,${h9-p9.bottom-25})`)
+                .call(d3.axisBottom(x9scale));
+
+                const y9scale = d3.scaleBand()
+                .domain(groupdata[1].map(d=>`[${d.MaMatHang}]${d.TenMatHang}`))
+                .range([0, h9 -p9.top -p9.bottom])
+                .padding(0.2);
+                groups9.append("g")
+                .call(d3.axisLeft(y9scale));
+
+                const color9 = d3.scaleOrdinal()
+                .domain(groupdata[1].map(d=>`[${d.MaMatHang}]${d.TenMatHang}`))
+                .range(d3.schemeTableau10)
+                //vẽ bar chart cho mỗi group
+                const subgroups9 = d3.group(groupdata[1], d=>`[${d.MaMatHang}]${d.TenMatHang}`);
+                subgroups9.forEach((subgroupdata, key)=>{
+                    groups9.append("rect")
+                    .datum(subgroupdata)
+                    .attr("x", 0)
+                    .attr("y", d=> y9scale(`[${d[0].MaMatHang}]${d[0].TenMatHang}`))
+                    .attr("height", y9scale.bandwidth())
+                    .attr("width", d=> x9scale(d3.max(d,e =>e.XacSuat)))
+                    .attr("fill", color9(`[${subgroupdata[0].MaMatHang}]${subgroupdata[0].TenMatHang}`))
+                    .attr("class", "bar")
+                    .append("title")
+                    .text(d=>`[${d[0].MaMatHang}]${d[0].TenMatHang}, Xác suất: ${d[0].XacSuat}`)
+                })
+                //thêm title
+                groups9.append("text")
+                .attr("x", (w9 -p9.left -p9.right)/3)
+                .attr("y", -10)
+                .text(groupdata[0])
+            })
+            
+        })
+      /* ============================
+         Câu 10: Placeholder (Chưa có dữ liệu)
+      ============================ */
+        //chuyển dữ liệu và nhóm dl chính
+        d3.csv("cau10.csv").then(function(data){
+            const sumstas10 = d3.group(data, d=>d.TenNhomHang)
+            const allItems10 = Array.from(new Set(data.map(d=>d.TenMatHang)));
+            //tạo svg cho mỗi group
+            const w10 = 800
+            const h10 = 300
+            const p10 = {top:30, right:150, bottom:30, left:50}
+
+            const svg10 = d3.select("#chart10")
+            .selectAll("svg")
+            .data(Array.from(sumstas10))
+            .enter()
+            .append("svg")
+            .attr("width", w10)
+            .attr("height", h10)
+            .append("g")
+            .attr("transform", `translate(200, ${p10.top})`);
+
+            const color1 = d3.scaleOrdinal()
+            .domain(allItems10)
+            .range(d3.schemeTableau10);
+            //tạo dữ liệu cho mỗi group
+            svg10.each(function(groupdata){
+                const groups10 = d3.select(this);
+                //set scale x, y, color
+                const x10scale = d3.scaleLinear()
+                .domain([d3.min(groupdata[1], d=>+d.Thang), d3.max(groupdata[1], d=>+d.Thang)])
+                .range([0, w10 - p10.left*3 - p10.right]);
+                groups10.append("g")
+                .attr("transform", `translate(0, ${h10 -p10.bottom -p10.top})`)
+                .call(d3.axisBottom(x10scale));
+
+                const y10scale = d3.scaleLinear()
+                    .domain([d3.min(groupdata[1], d=>+d.XacSuat)-0.05, d3.max(groupdata[1], d => +d.XacSuat)+ 0.05])
+                    .range([h10 - p10.top - p10.bottom, 10]);
+
+                groups10.append("g")
+                    .call(d3.axisLeft(y10scale).ticks(5));
+
+                //vẽ line chart cho mỗi group
+                const subgroups10 = d3.group(groupdata[1], d=>d.TenMatHang);
+                subgroups10.forEach((subgroupdata, key)=>{
+                    groups10.append("path")
+                    .datum(subgroupdata)
+                    .attr("fill", "none")
+                    .attr("stroke", color1(key))
+                    .attr("stroke-width", 2.5)
+                    .attr("d", d3.line()
+                        .x(d=>x10scale(+d.Thang))
+                        .y(d=>y10scale(+d.XacSuat))
+                    );
+                    groups10.selectAll(".circle")
+                    .data(subgroupdata)
+                    .enter()
+                    .append("circle")
+                    .attr("class", "bar")
+                    .attr("cx", d=>x10scale(+d.Thang))
+                    .attr("cy", d=>y10scale(d.XacSuat))
+                    .attr("r", 5)
+                    .attr("fill", color1(key))
+                    .attr("stroke", "white")
+                    .append("title")
+                    .text(d=>`${d.XacSuat*100}%`)
+                });
+                    
+                //thêm title
+                groups10.append("text")
+                .attr("text-anchor", "start")
+                .attr("x", (w10 - p10.left- p10.right)/3)
+                .attr("y", 0)
+                .text(groupdata[0])
+                .style("fill","black");
+                //tạo legend cho mỗi sub-group
+                const legend = groups10.selectAll(".legend")
+                .data(Array.from(subgroups10.keys()))
+                .enter()
+                .append("g")
+                .attr("class", "legend")
+                .attr("transform", (d,i) =>`translate(${w10 -p10.left -p10.right +50}, ${i*20})`)
+
+                legend.append("rect")
+                .attr("x", -w10-40)
+                .attr("y", 0)
+                .attr("height", 8)
+                .attr("width", 8)
+                .attr("fill", d=>color1(d))
+
+                legend.append("text")
+                .attr("x", -w10-25)
+                .attr("y", 5)
+                .attr("dy", ".10em")
+                .attr("text-anchor", "start")
+                .text(d=>d)
+            });
+        });
+      /* ============================
+         Câu 11: Phân phối Lượt mua hàng
+      ============================ */
+      d3.csv("cau11.csv").then(function(data){
+        const dataset11 = data.map(function(d) {
+          return {
+            TanSuatMua: d["Tần suất mua"],
+            SoKH: +d["Số khách hàng"]
+          }
+        });
+        const w11 = 1000, h11 = 1000;
+        const p11 = {top:20, bottom:40, left:30, right:40};
+        const svg11 = d3.select("#chart11")
+          .append("svg")
+          .attr("width", w11)
+          .attr("height", h11)
+          .append("g")
+          .attr("transform", `translate(185, ${p11.top-15})`);
+  
+        const x11scale = d3.scaleBand()
+          .domain(dataset11.map(d=> d.TanSuatMua))
+          .range([0, w11 - p11.left*5 - p11.right])
+          .padding(0.2);
+        const y11scale = d3.scaleLinear()
+          .domain([0, d3.max(dataset11, d=> d.SoKH)])
+          .range([h11 - p11.top - p11.bottom, 10]);
+  
+        svg11.selectAll("rect")
+          .data(dataset11)
+          .enter()
+          .append("rect")
+          .attr("x", d=> x11scale(d.TanSuatMua))
+          .attr("y", d=> y11scale(d.SoKH))
+          .attr("width", x11scale.bandwidth())
+          .attr("height", d=> (h11 - p11.top - p11.bottom) - y11scale(d.SoKH))
+          .attr("fill", "#69b3a2")
+          .attr("class", "bar")
+          .append("title")
+          .text(d=> `Tần suất mua: ${d.TanSuatMua}, Số khách hàng: ${d.SoKH}`);
+  
+        svg11.selectAll(".label")
+          .data(dataset11)
+          .enter()
+          .append("text")
+          .attr("class", "label")
+          .attr("x", d=> x11scale(d.TanSuatMua) + x11scale.bandwidth()/2)
+          .attr("y", d=> y11scale(d.SoKH) - 5)
+          .attr("text-anchor", "middle")
+          .text(d=> d.SoKH);
+  
+        svg11.append("g")
+          .attr("transform", `translate(0, ${h11 - p11.bottom -15})`)
+          .call(d3.axisBottom(x11scale));
+        svg11.append("g")
+          .call(d3.axisLeft(y11scale).tickFormat(d3.format(".2s")));
+      });
+  
+      /* ============================
+         Câu 12: Phân phối Mức chi trả của Khách hàng
+         (Histogram)
+      ============================ */
+      d3.csv("cau12.csv").then(function(data){
+        const dataset12 = data.map(function(d){
+          return { SoTien: +d["Số tiền"] };
+        });
+        const w12 = 1000, h12 = 1000;
+        const p12 = {top:20, bottom:40, left:40, right:30};
+        const svg12 = d3.select("#chart12")
+          .append("svg")
+          .attr("width", w12)
+          .attr("height", h12)
+          .append("g")
+          .attr("transform", `translate(185, ${p12.top-15})`);
+  
+        const bins = d3.histogram()
+          .value(d=> d.SoTien)
+          .domain([0, d3.max(dataset12, d=> d.SoTien)])
+          .thresholds(80)(dataset12);
+  
+        const x12scale = d3.scaleLinear()
+          .domain([0, d3.max(bins, d=> d.x0)])
+          .range([0, w12 - p12.left*5 - p12.right]);
+        const y12scale = d3.scaleLinear()
+          .domain([0, d3.max(bins, d=> d.length)])
+          .range([h12-p12.top-p12.bottom, 10]);
+  
+        svg12.selectAll("rect")
+          .data(bins)
+          .enter()
+          .append("rect")
+          .attr("x", d=> x12scale(d.x0))
+          .attr("y", d=> y12scale(d.length))
+          .attr("width", d=> x12scale(d.x1)-x12scale(d.x0)-1)
+          .attr("height", d=> (h12-p12.top-p12.bottom)- y12scale(d.length))
+          .attr("fill", "#69b3a2")
+          .attr("class", "bar")
+          .append("title")
+          .text(d=> `Số tiền: ${d.x0}-${d.x1}, Tần suất: ${d.length}`);
+  
+        svg12.selectAll(".label")
+          .data(bins)
+          .enter()
+          .append("text")
+          .attr("class", "label")
+          .attr("x", d=> x12scale(d.x0) + (x12scale(d.x1)-x12scale(d.x0))/2)
+          .attr("y", d=> y12scale(d.length)-5)
+          .attr("text-anchor", "middle")
+          .text(d=> d.length);
+  
+        svg12.append("g")
+          .attr("transform", `translate(0, ${h12-p12.bottom-15})`)
+          .call(d3.axisBottom(x12scale).tickFormat(d3.format(".2s")));
+        svg12.append("g")
+          .call(d3.axisLeft(y12scale).tickFormat(d3.format(".2s")));
+      });
+
+   </script>
+  </body>
+</html>
